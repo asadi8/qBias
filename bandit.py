@@ -53,6 +53,7 @@ params['const_std'] = 5.
 params['max_experiments']=1000
 
 li_bias=[]
+plt.ion()
 for experiment in range(params['max_experiments']):
 	tf.reset_default_graph()
 	numpy.random.seed(experiment)
@@ -74,15 +75,18 @@ for experiment in range(params['max_experiments']):
 		Y_mean = [numpy.sin(x) for x in X]
 		Y_std = [params['const_std'] for x in X]
 
-		'''
+		plt.clf()
 		plt.plot(means,label='means')
 		plt.plot(sigmas,label='vars')
 		plt.plot(Y_mean, label='True means')
 		plt.plot(Y_std, label='True vars')
-		plt.legend()
-		plt.show()
-		plt.close()
-		'''
+                plt.legend()
+                plt.hold(True)
+                plt.pause(0.01)
+		
+		#plt.show()
+		#plt.close()
+		
 		exp_max=numpy.max(means)
 		#print(exp_max)
 		li_bias.append(exp_max-1)
