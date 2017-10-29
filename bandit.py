@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy, sys
 import matplotlib.pyplot as plt
 import random
+import soft_operators
 
 class q_network:
 	def __init__(self,params):
@@ -45,15 +46,17 @@ params={}
 params['width']=20
 params['alpha']=0.05
 params['batch_size']=64
-params['num_batches']=500
+params['num_batches']=20
 params['num_hidden_layers']=1
-params['num_arms'] = 20
+params['num_arms'] = 50
 params['embed_size'] = 5
-params['const_std'] = 5.
+params['const_std'] = .5
 params['max_experiments']=1000
 
 li_bias=[]
+li_modified_bias=[]
 plt.ion()
+print('exp_max is equal to 1 .... for now')
 for experiment in range(params['max_experiments']):
 	tf.reset_default_graph()
 	numpy.random.seed(experiment)
@@ -87,10 +90,21 @@ for experiment in range(params['max_experiments']):
 		#plt.show()
 		#plt.close()
 		
-		exp_max=numpy.max(means)
-		#print(exp_max)
-		li_bias.append(exp_max-1)
+		expectation_max=numpy.max(means)
+		
+		#print(sigmas*sigmas)
+		#print(soft_operators.mellowmax_hessian_diag(means,5))
+		#sys.exit(1)
+		estimated_bias=numpy.sum(sigmas*sigmas*soft_operators.mellowmax_hessian_diag(means,1)/2.)
+		#print(estimated_bias)
+		#sys.exit(1)
+		max_expectation=1
+		bias=expectation_max-max_expectation
+		li_bias.append(bias)
+		li_modified_bias.append(expectation_max-max_expectation-estimated_bias)
+		print(bias,estimated_bias)
 	print('average bias on {} experiments is {}'.format(experiment,numpy.mean(li_bias)))
+	print('average modified bias on {} experiments is {}'.format(experiment,numpy.mean(li_modified_bias)))
 
 
 
