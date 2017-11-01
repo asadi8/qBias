@@ -3,6 +3,7 @@ import numpy, sys
 import matplotlib.pyplot as plt
 import random
 import soft_operators
+import time
 
 class q_network:
 	def __init__(self,params):
@@ -42,6 +43,12 @@ def get_next_batch(params):
 	Y = numpy.array([numpy.random.normal(loc=x, scale=y) for x, y in zip(Y_mean, Y_std)])
 	return X, Y
 
+def increment_counts(counts,X):
+	for x in X:
+		counts[x]=counts[x]+1
+	print(counts)
+	return counts
+
 params={}
 params['width']=20
 params['alpha']=0.05
@@ -63,15 +70,13 @@ for experiment in range(params['max_experiments']):
 	random.seed(experiment)
 	tf.set_random_seed(experiment)
 	with tf.Session() as sess:
+		counts=params['num_arms']*[0]
 		nn=q_network(params)
 		sess.run(tf.global_variables_initializer())
 		for j in range(params['num_batches']):
 			X, Y=get_next_batch(params)
+			counts=increment_counts(counts,X)
 			_,l,sigma,mu=sess.run([nn.train_op,nn.loss,nn.sigma,nn.mu],feed_dict={nn.output:Y,nn.action:X})
-			if j%100==0:
-				pass
-				#print('loss:',l)
-				#print('')
 
 		X=[j for j in range(params['num_arms'])]
 		means, sigmas = sess.run([nn.mu, nn.sigma],feed_dict={nn.action:X})
@@ -95,9 +100,9 @@ for experiment in range(params['max_experiments']):
 		#print(sigmas*sigmas)
 		#print(soft_operators.mellowmax_hessian_diag(means,5))
 		#sys.exit(1)
-		estimated_bias=numpy.sum(sigmas*sigmas*soft_operators.mellowmax_hessian_diag(means,1)/2.)
-		#print(estimated_bias)
-		#sys.exit(1)
+		variance=sigmas*sigmas
+		mean_estimator_variance=variance/(numpy.array(counts))
+		estimated_bias=numpy.sum(mean_estimator_variance*soft_operators.mellowmax_hessian_diag(means,40))
 		max_expectation=1
 		bias=expectation_max-max_expectation
 		li_bias.append(bias)
@@ -105,6 +110,7 @@ for experiment in range(params['max_experiments']):
 		print(bias,estimated_bias)
 	print('average bias on {} experiments is {}'.format(experiment,numpy.mean(li_bias)))
 	print('average modified bias on {} experiments is {}'.format(experiment,numpy.mean(li_modified_bias)))
+	#sys.exit(1)
 
 
 
