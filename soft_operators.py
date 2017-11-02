@@ -1,5 +1,6 @@
 import numpy
 import sys
+import math
 
 def mellowmax(X,beta):
 	type_check(X,beta)
@@ -12,12 +13,25 @@ def mellowmax_grad(X,beta):
 
 def mellowmax_hessian_diag(X,beta):
 	type_check(X,beta)
-	bp=boltzmann_policy(X,beta)
-	return beta * bp * (1-bp)
+	while True:
+		done=1
+		bp=boltzmann_policy(X,beta)	
+		for b in bp:
+			if math.isnan(b):
+				done=0
+		beta=0.97*beta
+		#print('backtracking beta ....')
+		#print('new beta: ',beta)
+		if done==1:
+			break
+	#sys.exit(1)
+	out= beta * bp * (1-bp)
+	return out
 
 def boltzmann_policy(X,beta):
 	type_check(X,beta)
-	exps=numpy.exp(beta*X)
+	C=numpy.max(X)
+	exps=numpy.exp(beta*(X))
 	return exps/numpy.sum(exps)
 
 def type_check(X,beta):
@@ -27,7 +41,3 @@ def type_check(X,beta):
 		print('X is not a numpy array')
 		sys.exit(1)
 	beta=float(beta)
-
-ar=numpy.array([1,2,2,5,4.8])
-ans=mellowmax(ar,0.75)
-print(ans)
